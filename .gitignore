@@ -1,0 +1,6 @@
+__pycache__/
+.vscode/
+*.pyc
+kagDat.py
+Data/
+cleanData.py
