@@ -1,15 +1,11 @@
 import cupy as cp
 import polars as pl
-import time
 
 def gen():
     temp = pl.read_csv("Data/BTC_1sec.csv").drop(["", "system_time"]).to_numpy()
 
     data = cp.empty_like(temp)
     data.set(temp)
-
-    del temp
-    cp.get_default_memory_pool().free_all_blocks()
 
     # 1 column for Volume weighted Mid Price - Mid Price, 15 columns for OFI, 15 columns for Spoofing
     featArr = cp.empty((data.shape[0] - 1, 31), order="F")
@@ -23,12 +19,16 @@ def gen():
     # Spoofing computations
     featArr[:, cp.arange(16, 31)] = (data[:-1, cp.arange(34, 49)]/(data[:-1, cp.arange(19, 34)] + 1e-6)) - (data[:-1, cp.arange(109, 124)]/(data[:-1, cp.arange(94, 109)] + 1e-6))
 
-    objective = data[1:, 0]
+    # Separating 80% of data for training
+    train_size = (data.shape[0]*4)//5
+    training_featArr = featArr[:train_size]
+    training_objective = data[1:train_size + 1, 0] - data[0:train_size, 0]
+    tester_featArr = featArr[train_size:]
+    tester_objective = data[train_size + 1:, 0] - data[train_size: -1, 0]
 
-    del data
+    del data, featArr
     cp.get_default_memory_pool().free_all_blocks()
 
-    # time.sleep(5)
-    return featArr, objective
+    return training_featArr, training_objective, tester_featArr, tester_objective
 
 gen()

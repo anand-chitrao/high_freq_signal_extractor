@@ -1,21 +1,46 @@
 import cupy as cp
 import genFeats as gF
 
-def coeffs(featArr, objective):
-    λ = 3
-    D = cp.exp(λ*cp.arange(0, 15, dtype=cp.float64))
-    Λ = cp.zeros((31, 31), dtype=cp.float64)
-    Λ[0, 0] = cp.exp(10)
-    Λ[1:16, 1:16] = D
-    Λ[16:31, 16:31] = D
+# Extracting principal components
+def PCA(featArr):
+    N = featArr.shape[0]
+    feat_cov = cp.cov(featArr, rowvar=False)
+    eigVal, eigVec = cp.linalg.eigh(feat_cov)
+    eigVal = eigVal[::-1]
+    tot_eigVal = cp.sum(eigVal)
+    trunc_point = cp.where(cp.cumsum(eigVal)/tot_eigVal > 0.95)[0]
+    eigVal = eigVal[:trunc_point[0] + 1]
+    eigVec = eigVec[:, ::-1]
+    eigVec = eigVec[:, :trunc_point[0] + 1]
+    
+    return eigVec
 
-    featArr = (featArr - featArr.mean(axis=1).reshape(-1, 1))/(featArr.std(axis=1).reshape(-1, 1) + 1e-6)
+# The OLS module
+def OLS(featArr, objective, V):
+    # Projecting the features onto the principal components
+    featArr = featArr @ V
+    feat_cov = cp.var(featArr, axis=0)
 
-    β = cp.linalg.solve(featArr.T @ featArr + Λ, featArr.T @ objective)
+    # Getting the OLS coefficients using the covariance matrix trick
+    meanObj   = objective.mean()
+    meanFeat  = featArr.mean(axis = 0)
+    meanCross = (objective.reshape(-1, 1) * featArr).mean(axis = 0)
+    b = meanCross - meanObj*meanFeat
 
-    return β
+    β = b/feat_cov
+    γ = meanObj - β @ meanFeat
 
-f, o = gF.gen()
+    return β, γ
 
-β = coeffs(f, o)
-print(β)
+def linReg():
+    # Getting the data and separating it into the training set and the testing set in a ratio of 80:20
+    training_featArr, training_objective, tester_featArr, tester_objective = gF.gen()
+
+    V = PCA(training_featArr)
+
+    β, γ = OLS(training_featArr, training_objective, V)
+
+    # return tester_featArr, tester_objective, V, β, γ
+    return training_featArr, training_objective, V, β, γ
+
+linReg()
