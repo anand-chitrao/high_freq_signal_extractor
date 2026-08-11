@@ -40,7 +40,7 @@ def linReg():
 
     β, γ = OLS(training_featArr, training_objective, V)
 
-    # return tester_featArr, tester_objective, V, β, γ
-    return training_featArr, training_objective, V, β, γ
+    return tester_featArr, tester_objective, V, β, γ
+    # return training_featArr, training_objective, V, β, γ
 
 linReg()
