@@ -13,10 +13,10 @@ def gen():
     # Volume weighted Mid Price - Mid Price
     featArr[:, 0] = ((data[:-2, 19]/(data[:-2, 0] + data[:-2, 4]))*(data[:-2, 0] + data[:-2, 79]) + (data[:-2, 94]/(data[:-2, 0] + data[:-2, 79]))*(data[:-2, 0] + data[:-2, 4]))/((data[:-2, 19]/(data[:-2, 0] + data[:-2, 4])) + (data[:-2, 94]/(data[:-2, 0] + data[:-2, 79]))) - data[:-2, 0]
 
-    # OFI computations
+    # Decaying OFI computations
     featArr[:, cp.arange(1, 16)] = ((data[:-2, 0:1] + data[:-2, cp.arange(4, 19)])*(data[:-2, cp.arange(49, 64)] - data[:-2, cp.arange(34, 49)] -  data[:-2, cp.arange(139, 154)]) - (data[:-2, 0:1] + data[:-2, cp.arange(79, 94)])*(data[:-2, cp.arange(124, 139)] - data[:-2, cp.arange(109, 124)] - data[:-2, cp.arange(64, 79)]))  * cp.exp(-0.5*cp.arange(0, 15))
 
-    # Spoofing computations
+    # Decaying Spoofing computations
     featArr[:, cp.arange(16, 31)] = ((data[:-2, cp.arange(34, 49)]/(data[:-2, cp.arange(19, 34)] + 1e-6)) - (data[:-2, cp.arange(109, 124)]/(data[:-2, cp.arange(94, 109)] + 1e-6))) * cp.exp(-0.5*cp.arange(0, 15))
 
     # Separating 80% of data for training
@@ -26,9 +26,13 @@ def gen():
     tester_featArr = featArr[train_size:]
     tester_objective = data[train_size + 2:, 0] - data[train_size + 1: -1, 0]
 
+    test_mid_price = data[train_size:-2, 0]
+    test_best_ask  = test_mid_price + data[train_size:-2, 4]
+    test_best_bid  = test_mid_price + data[train_size:-2, 79]
+
     del data, featArr
     cp.get_default_memory_pool().free_all_blocks()
 
-    return training_featArr, training_objective, tester_featArr, tester_objective
+    return training_featArr, training_objective, tester_featArr, tester_objective, test_mid_price, test_best_ask, test_best_bid
 
 gen()
