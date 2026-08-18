@@ -34,13 +34,13 @@ def OLS(featArr, objective, V):
 
 def linReg():
     # Getting the data and separating it into the training set and the testing set in a ratio of 80:20
-    training_featArr, training_objective, tester_featArr, tester_objective, test_mid_price, test_best_ask, test_best_bid = gF.gen()
+    training_featArr, training_objective, tester_featArr, tester_objective, test_mid_price, test_best_ask, test_best_bid, window, momentum, train_size, triggered_buys, triggered_sells = gF.gen()
 
     V = PCA(training_featArr)
 
     β, γ = OLS(training_featArr, training_objective, V)
 
-    return tester_featArr, tester_objective, V, β, γ, test_mid_price, test_best_ask, test_best_bid
+    return tester_featArr, tester_objective, V, β, γ, test_mid_price, test_best_ask, test_best_bid, window, momentum, triggered_buys, triggered_sells
     # return training_featArr, training_objective, V, β, γ
 
 def err(X, Y, β, γ):

@@ -3,7 +3,7 @@ import xgboost as xgb
 import genFeats as gF
 
 def XGB():
-    training_featArr, training_objective, tester_featArr, tester_objective, test_mid_price, test_best_ask, test_best_bid = gF.gen()
+    training_featArr, training_objective, tester_featArr, tester_objective, test_mid_price, test_best_ask, test_best_bid, window,  momentum, train_size, triggered_buys, triggered_sells = gF.gen()
 
     train_data = xgb.QuantileDMatrix(training_featArr, label=training_objective)
     test_data  = xgb.QuantileDMatrix(tester_featArr, label=tester_objective, ref=train_data)
@@ -27,7 +27,7 @@ def XGB():
 
     # print(err(tester_objective, preds))
 
-    return tester_objective, preds, test_mid_price, test_best_ask, test_best_bid
+    return tester_objective, preds, test_mid_price, test_best_ask, test_best_bid, window, momentum, train_size, triggered_buys, triggered_sells
 
 def err(objective, preds):
     tss = cp.sum(objective**2)
